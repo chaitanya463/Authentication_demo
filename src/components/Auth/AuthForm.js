@@ -1,5 +1,6 @@
 import { useState, useRef, useContext } from 'react';
 import AuthContext from '../../store/auth-context';
+import {useHistory} from 'react-router-dom'
 
 import classes from './AuthForm.module.css';
 
@@ -8,6 +9,7 @@ const AuthForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const emailInputRef = useRef();
   const passwordInputRef = useRef();
+  const history = useHistory();
 
   const authContext = useContext(AuthContext);
 
@@ -21,10 +23,13 @@ const AuthForm = () => {
     const enteredEmail = emailInputRef.current.value;
     const enteredPassword = passwordInputRef.current.value;
     setIsLoading(true);
+    let url;
     if (isLogin) {
-
+      url = 'https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyAdPn6OPhyveTAB5Lq7AFoLHSmyUiFNi98';
     } else {
-      fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyAdPn6OPhyveTAB5Lq7AFoLHSmyUiFNi98',
+      url = 'https://identitytoolkit.googleapis.com/v1/accounts:signUp?key=AIzaSyAdPn6OPhyveTAB5Lq7AFoLHSmyUiFNi98';
+    }
+      fetch(url,
       {
         method: 'POST',
         body: JSON.stringify({
@@ -50,11 +55,12 @@ const AuthForm = () => {
           });
         }
       }).then(data => {
-        authContext.login(data.idToken);
+        const expirationTime = new Date((new Date().getTime() + (+data.expiresIn * 1000)));
+        authContext.login(data.idToken, expirationTime.toISOString());
+        history.replace('/')
       }).catch(error => {
         alert(error.message);
       });
-    }
   }
 
   return (
